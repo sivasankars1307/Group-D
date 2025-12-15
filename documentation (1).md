@@ -58,7 +58,7 @@ This modular design ensures clear separation of concerns and real-time responsiv
 
 ## 5. Workflow / Flow Diagram
 
-![Workflow Diagram](docs/workflow_diagram.png)
+<img src="docs/workflow_diagram.png" width="400"/>
 
 ### Execution Flow
 
