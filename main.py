@@ -116,7 +116,7 @@ st.markdown(
         """
         <div class="app-card">
             <h1 class="apple-title">Microphone</h1>
-            <p class="apple-sub">Infosys SpringBoot - Volume Control Using Hand Gestures </p>
+            <p class="apple-sub">Infosys SpringBoard - Volume Control Using Hand Gestures </p>
             <div style="display:flex;gap:10px;align-items:center">
                 <div class="status-pill">TEAM D</div>
                 <div style="color:var(--muted);font-size:15px">Mentor:<b> Dr. D. BHANU PRAKASH<b></div>
@@ -251,4 +251,5 @@ if st.session_state.run_camera:
 
         cap.release()
         cv2.destroyAllWindows()
+
         st.write("Stopped.")
