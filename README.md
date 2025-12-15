@@ -271,8 +271,6 @@ STOP CAMERA?
 
 ## 👥 Team
 
-**Team D**
-
 * Anusuya
 * Prashanti
 * Shreyas
