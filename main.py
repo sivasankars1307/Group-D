@@ -120,7 +120,7 @@ st.markdown(
             <div style="display:flex;gap:10px;align-items:center">
                 <div class="status-pill">TEAM D</div>
                 <div style="color:var(--muted);font-size:15px">Mentor:<b> Dr. D. BHANU PRAKASH<b></div>
-                 <div style="color:var(--muted);font-size:13px">Team: Anasuya, Prashanti, Shreyas, Siva Sankar</div>
+                 <div style="color:var(--muted);font-size:13px">Team: Anusuya, Prashanti, Shreyas, Siva Sankar</div>
             </div>
         </div>
         """,
@@ -253,3 +253,4 @@ if st.session_state.run_camera:
         cv2.destroyAllWindows()
 
         st.write("Stopped.")
+
