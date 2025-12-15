@@ -1,7 +1,7 @@
 # 📘 Project Documentation
 
 ## Project Title
-**Hand Gesture–Based Microphone Volume Control System**
+**Hand Gesture–Based Volume Control System**
 
 ---
 
