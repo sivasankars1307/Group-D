@@ -39,7 +39,7 @@ Design and implement a **gesture-based, contactless microphone control system** 
 
 ### 4.1 Architecture Diagram
 
-📌 **Insert Image Here:** `architecture_diagram.png`
+![System Architecture](docs/architecture_diagram.png)
 
 **Description:**  
 The architecture diagram illustrates the end-to-end flow of data and control across system components:
@@ -58,7 +58,7 @@ This modular design ensures clear separation of concerns and real-time responsiv
 
 ## 5. Workflow / Flow Diagram
 
-📌 **Insert Image Here:** `workflow_diagram.png`
+![Workflow Diagram](docs/workflow_diagram.png)
 
 ### Execution Flow
 
