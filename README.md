@@ -14,7 +14,7 @@ This project was developed as part of the **Infosys SpringBoard** program.
 * 📐 **Scale-invariant ratio calculation** (robust to hand distance from camera)
 * 🎛️ **Manual volume controls** (+20% / −20%) in sidebar
 * 🎥 **Live camera feed** with visual landmarks
-* 🧊 **Apple-inspired UI** built with Streamlit + custom CSS
+* 🧊  built with Streamlit + custom CSS
 
 ---
 
