@@ -8,14 +8,14 @@ from comtypes import CLSCTX_ALL, CoInitialize
 from comtypes.client import CreateObject
 from pycaw.pycaw import IAudioEndpointVolume, IMMDeviceEnumerator
 
-# --------------------------------------------------
+# ==================================================
 # PAGE CONFIG
-# --------------------------------------------------
+# ==================================================
 st.set_page_config(layout="wide", page_title="Hand Gesture Mic Control")
 
-# --------------------------------------------------
-# DARK BLUE THEME (UI)
-# --------------------------------------------------
+# ==================================================
+# DARK UI THEME
+# ==================================================
 st.markdown("""
 <style>
 html, body, .stApp {
@@ -28,8 +28,9 @@ html, body, .stApp {
 .stButton>button {
     background: linear-gradient(135deg, #2563eb, #1e40af);
     color: white;
-    border-radius: 8px;
+    border-radius: 10px;
     border: none;
+    padding: 10px 18px;
 }
 .stButton>button:hover {
     background: linear-gradient(135deg, #1d4ed8, #1e3a8a);
@@ -39,27 +40,26 @@ html, body, .stApp {
     padding: 14px;
     border-radius: 12px;
 }
-h1, h2, h3 {
-    color: #e5e7eb;
-}
 </style>
 """, unsafe_allow_html=True)
 
-# --------------------------------------------------
-# PARAMETERS
-# --------------------------------------------------
-PINCH_RATIO_THRESHOLD = 0.15   # below this = mute
-MIN_RATIO = 0.1                # smallest distance
-MAX_RATIO = 1.8                # farthest distance
+# ==================================================
+# PARAMETERS (TUNED — DON’T TOUCH RANDOMLY)
+# ==================================================
+PINCH_RATIO_THRESHOLD = 0.15
+MIN_RATIO = 0.10
+MAX_RATIO = 1.80
 SMOOTHING = 5
 
-# --------------------------------------------------
-# LOAD MEDIAPIPE
-# --------------------------------------------------
+FONT = cv2.FONT_HERSHEY_SIMPLEX
+LINE_THICKNESS = 4
+
+# ==================================================
+# MEDIAPIPE INIT
+# ==================================================
 @st.cache_resource
 def load_mediapipe():
-    mp_hands = mp.solutions.hands
-    hands = mp_hands.Hands(
+    hands = mp.solutions.hands.Hands(
         static_image_mode=False,
         model_complexity=0,
         max_num_hands=1,
@@ -70,27 +70,32 @@ def load_mediapipe():
 
 hands, mp_draw = load_mediapipe()
 
-# --------------------------------------------------
-# AUDIO (MIC CONTROL)
-# --------------------------------------------------
+# ==================================================
+# MICROPHONE CONTROL (WINDOWS)
+# ==================================================
 def get_mic_interface():
     try:
         CoInitialize()
         clsid = "{BCDE0395-E52F-467C-8E3D-C4579291692E}"
         enumerator = CreateObject(clsid, interface=IMMDeviceEnumerator)
-        device = enumerator.GetDefaultAudioEndpoint(1, 0)
-        interface = device.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+        device = enumerator.GetDefaultAudioEndpoint(1, 0)  # MIC
+        interface = device.Activate(
+            IAudioEndpointVolume._iid_,
+            CLSCTX_ALL,
+            None
+        )
         return cast(interface, POINTER(IAudioEndpointVolume))
     except:
         return None
 
-# --------------------------------------------------
-# SIDEBAR (NO CAMERA INDEX ANYMORE)
-# --------------------------------------------------
+# ==================================================
+# SIDEBAR
+# ==================================================
 with st.sidebar:
     st.header("Settings")
 
-    st.subheader("Manual Mic Volume")
+    st.subheader("Manual Mic Control")
+
     def manual_change(delta):
         vc = get_mic_interface()
         if vc:
@@ -108,18 +113,18 @@ with st.sidebar:
     if c2.button("Vol -10%"):
         manual_change(-0.1)
 
-# --------------------------------------------------
+# ==================================================
 # HEADER
-# --------------------------------------------------
-st.title("🎤 Microphone Volume Control Using Hand Gestures")
+# ==================================================
+st.title("🎤 GestureGain - Volume Control Using Hand Gestures")
 st.markdown("**Mentor:** Dr. D. Bhanu Prakash")
-st.markdown("---")
+st.markdown("**Developed by:** Anusuya B, Prashanti Hebbar, Shreyas S N, Siva Sankar")
 
 col1, col2 = st.columns([1, 1])
 
-# --------------------------------------------------
-# LEFT SIDE (Dashboard)
-# --------------------------------------------------
+# ==================================================
+# DASHBOARD
+# ==================================================
 with col1:
     st.subheader("Dashboard")
 
@@ -141,20 +146,21 @@ with col1:
     if not st.session_state.run_camera:
         status_msg.info("Camera is OFF")
 
-# --------------------------------------------------
-# RIGHT SIDE (Live Feed)
-# --------------------------------------------------
+# ==================================================
+# LIVE FEED
+# ==================================================
 with col2:
     st.subheader("Live Camera Feed")
     video_container = st.empty()
 
-# --------------------------------------------------
+# ==================================================
 # CAMERA LOOP
-# --------------------------------------------------
+# ==================================================
 if st.session_state.run_camera:
     cap = cv2.VideoCapture(0)
+
     if not cap.isOpened():
-        st.error("Camera not found!")
+        st.error("Camera not detected.")
         st.session_state.run_camera = False
     else:
         vc = get_mic_interface()
@@ -177,54 +183,71 @@ if st.session_state.run_camera:
                     mp_draw.draw_landmarks(
                         frame,
                         hand_lms,
-                        mp.solutions.hands.HAND_CONNECTIONS,
-                        mp_draw.DrawingSpec(color=(0,255,255), thickness=2, circle_radius=3),
-                        mp_draw.DrawingSpec(color=(0,128,255), thickness=2)
+                        mp.solutions.hands.HAND_CONNECTIONS
                     )
 
-                    # landmarks
                     p4 = hand_lms.landmark[4]   # thumb tip
                     p8 = hand_lms.landmark[8]   # index tip
                     p0 = hand_lms.landmark[0]   # wrist
-                    p9 = hand_lms.landmark[9]   # middle base
+                    p9 = hand_lms.landmark[9]   # middle MCP
 
                     pinch = math.hypot(p8.x - p4.x, p8.y - p4.y)
                     scale = math.hypot(p9.x - p0.x, p9.y - p0.y)
-                    if scale < 0.01:
-                        scale = 0.01
+                    scale = max(scale, 0.01)
 
                     ratio = pinch / scale
                     ratio_val = ratio
 
+                    # Pixel coords
+                    x4, y4 = int(p4.x * w), int(p4.y * h)
+                    x8, y8 = int(p8.x * w), int(p8.y * h)
+
+                    color = (0, 255, 0)
+                    if ratio <= PINCH_RATIO_THRESHOLD:
+                        color = (0, 0, 255)
+
+                    # Draw pinch visuals
+                    cv2.circle(frame, (x4, y4), 8, (255, 0, 255), -1)
+                    cv2.circle(frame, (x8, y8), 8, (255, 0, 255), -1)
+                    cv2.line(frame, (x4, y4), (x8, y8), color, LINE_THICKNESS)
+
+                    dist_px = int(math.hypot(x8 - x4, y8 - y4))
+                    cv2.putText(
+                        frame,
+                        f"{dist_px}px",
+                        (min(x4, x8), min(y4, y8) - 10),
+                        FONT, 0.6, color, 2
+                    )
+
                     if vc:
                         try:
                             if ratio <= PINCH_RATIO_THRESHOLD:
-                                if not vc.GetMute():
-                                    vc.SetMute(1, None)
+                                vc.SetMute(1, None)
                                 muted = True
                             else:
-                                if vc.GetMute():
-                                    vc.SetMute(0, None)
+                                vc.SetMute(0, None)
                                 muted = False
 
-                                # fixed logic: near = low, far = high
                                 vol = np.interp(
                                     ratio,
                                     [MIN_RATIO, MAX_RATIO],
                                     [0, 100]
                                 )
                                 vol = SMOOTHING * round(vol / SMOOTHING)
-                                vol = max(0, min(100, vol))
+                                vol = int(np.clip(vol, 0, 100))
                                 vc.SetMasterVolumeLevelScalar(vol / 100, None)
                         except:
                             pass
 
+            # =======================
+            # UI METRICS
+            # =======================
             if vc:
                 try:
                     curr_vol = int(vc.GetMasterVolumeLevelScalar() * 100)
                     vol_metric.metric("Mic Volume", f"{curr_vol}%")
                 except:
-                    pass
+                    curr_vol = 0
 
             ratio_metric.metric("Gesture Ratio", f"{ratio_val:.2f}")
 
@@ -233,8 +256,33 @@ if st.session_state.run_camera:
             else:
                 status_msg.success("MICROPHONE ACTIVE")
 
+            # =======================
+            # VOLUME BAR OVERLAY
+            # =======================
+            bar_x, bar_y = 40, 60
+            bar_w, bar_h = 25, 250
+
+            cv2.rectangle(frame, (bar_x, bar_y),
+                          (bar_x + bar_w, bar_y + bar_h),
+                          (50, 50, 50), -1)
+
+            fill_h = int((curr_vol / 100) * bar_h)
+            cv2.rectangle(
+                frame,
+                (bar_x, bar_y + bar_h - fill_h),
+                (bar_x + bar_w, bar_y + bar_h),
+                (0, 200, 255), -1
+            )
+
+            cv2.putText(
+                frame,
+                f"{curr_vol}%",
+                (bar_x - 10, bar_y + bar_h + 30),
+                FONT, 0.6, (255, 255, 255), 2
+            )
+
             video_container.image(frame, channels="BGR", width=650)
 
         cap.release()
         cv2.destroyAllWindows()
-        st.write("Stopped")
+        st.write("Camera stopped.")
